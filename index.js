@@ -126,9 +126,10 @@ GarageDoorOpener.prototype.getServices = function () {
 
     // 🔥 initial safe sync AFTER service exists
     this._syncSensor();
-
+this.log.warn("after sync sensor call");
     // 🔥 store interval so it doesn't disappear
     this.pollTimer = setInterval(() => {
+this.log.warn("poll tick");
         this._syncSensor();
     }, 5000);
 
