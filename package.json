@@ -5,7 +5,7 @@
     "main": "index.js",
     "engines": {
         "homebridge": ">=0.4.50",
-        "node": ">=12.13.0"
+        "node": ">=18"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1"
@@ -15,8 +15,7 @@
         "url": "git+https://github.com/rmshapiro/homebridge-garage-door-http"
     },
     "dependencies": {
-        "jsonpath": "^1.0.2",
-        "request": "^2.88.2"
+        "jsonpath": "^1.0.2"
     },
     "keywords": [
         "homebridge-plugin",
@@ -32,7 +31,7 @@
     "author": "Ron Shapiro <rmshapiro@gmail.com>",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/rmshapiro/homebridge-garage-door-http.git/issues"
+        "url": "https://github.com/rmshapiro/homebridge-garage-door-http/issues"
     },
-    "homepage": "https://github.com/rmshapiro/homebridge-garage-door-http.git#readme"
+    "homepage": "https://github.com/rmshapiro/homebridge-garage-door-http#readme"
 }

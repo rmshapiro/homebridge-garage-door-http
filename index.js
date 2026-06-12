@@ -22,7 +22,7 @@ const STATES = {
     CLOSING: 3
 };
 
-function GarageDoorOpener(log, config) {
+function GarageDoorHTTP(log, config) {
     this.log = log;
     this.config = config;
 
@@ -81,7 +81,7 @@ function GarageDoorOpener(log, config) {
 /* -------------------------
    HTTP
 --------------------------*/
-GarageDoorOpener.prototype._httpRequest = function (url, body, method, callback) {
+GarageDoorHTTP.prototype._httpRequest = function (url, body, method, callback) {
     request(
         {
             url,
@@ -98,7 +98,7 @@ GarageDoorOpener.prototype._httpRequest = function (url, body, method, callback)
 /* -------------------------
    SENSOR STATUS
 --------------------------*/
-GarageDoorOpener.prototype._fetchStatus = function (callback) {
+GarageDoorHTTP.prototype._fetchStatus = function (callback) {
     this._httpRequest(this.statusURL, "", "GET", (error, response, body) => {
         if (error) return callback(error);
 
@@ -122,7 +122,7 @@ GarageDoorOpener.prototype._fetchStatus = function (callback) {
 /* -------------------------
    STATE MACHINE CORE
 --------------------------*/
-GarageDoorOpener.prototype._setState = function (state, source = "internal") {
+GarageDoorHTTP.prototype._setState = function (state, source = "internal") {
     this.state = state;
 
     let hk;
@@ -177,7 +177,7 @@ GarageDoorOpener.prototype._setState = function (state, source = "internal") {
 /* -------------------------
    SENSOR SYNC (IDLE ONLY)
 --------------------------*/
-GarageDoorOpener.prototype._syncFromSensor = function () {
+GarageDoorHTTP.prototype._syncFromSensor = function () {
     if (this.state === "OPENING" || this.state === "CLOSING") return;
 
     this._fetchStatus((err, value) => {
@@ -191,7 +191,7 @@ GarageDoorOpener.prototype._syncFromSensor = function () {
 /* -------------------------
    COMMAND HANDLER
 --------------------------*/
-GarageDoorOpener.prototype.setTargetDoorState = function (value, callback) {
+GarageDoorHTTP.prototype.setTargetDoorState = function (value, callback) {
     const desired = value === 0 ? "OPEN" : "CLOSED";
 
     // nothing to do if door is already at correct state
@@ -234,7 +234,7 @@ GarageDoorOpener.prototype.setTargetDoorState = function (value, callback) {
 /* -------------------------
    MOVEMENT MONITOR
 --------------------------*/
-GarageDoorOpener.prototype._startMovementMonitor = function (desired, token) {
+GarageDoorHTTP.prototype._startMovementMonitor = function (desired, token) {
     const targetState = desired;
 
     this.pollTimer = setInterval(() => {
@@ -277,7 +277,7 @@ GarageDoorOpener.prototype._startMovementMonitor = function (desired, token) {
 /* -------------------------
    IDENTIFY
 --------------------------*/
-GarageDoorOpener.prototype.identify = function (callback) {
+GarageDoorHTTP.prototype.identify = function (callback) {
     this.log("Identify requested");
     callback();
 };
@@ -285,7 +285,7 @@ GarageDoorOpener.prototype.identify = function (callback) {
 /* -------------------------
    SERVICES
 --------------------------*/
-GarageDoorOpener.prototype.getServices = function () {
+GarageDoorHTTP.prototype.getServices = function () {
     this.informationService = new Service.AccessoryInformation();
 
     this.informationService
