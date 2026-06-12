@@ -74,7 +74,7 @@ function GarageDoorHTTP(log, config) {
     this.pollTimer = null;
     this.timeoutTimer = null;
 
-    this.service = new Service.GarageDoorOpener(this.name);
+    this.service = new Service.GarageDoorHTTP(this.name);
 }
 
 /* -------------------------
