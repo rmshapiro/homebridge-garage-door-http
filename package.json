@@ -1,0 +1,38 @@
+{
+    "name": "homebridge-garage-door-http",
+    "version": "1.0.0",
+    "description": "Homebridge plugin for a simple garage door opener using HTTP commands for e.g., Shelly 1 or ESPhome",
+    "main": "index.js",
+    "engines": {
+        "homebridge": ">=0.4.50",
+        "node": ">=12.13.0"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/rmshapiro/homebridge-garage-door-http.git"
+    },
+    "dependencies": {
+        "jsonpath": "^1.0.2",
+        "request": "^2.88.2"
+    },
+    "keywords": [
+        "homebridge-plugin",
+        "homebridge",
+        "http",
+        "garage",
+        "garagedoor",
+        "home",
+        "remote",
+        "shelly",
+        "shelly1"
+    ],
+    "author": "Ron Shapiro",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/rmshapiro/homebridge-garage-door-http.git/issues"
+    },
+    "homepage": "https://github.com/rmshapiro/homebridge-garage-door-http.git#readme"
+}
