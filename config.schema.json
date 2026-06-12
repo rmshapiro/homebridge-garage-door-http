@@ -1,5 +1,5 @@
 {
-    "pluginAlias": "GarageDoorHTTP",
+    "pluginAlias": "GarageDoorOpener",
     "pluginType": "accessory",
     "singular": false,
     "schema": {
