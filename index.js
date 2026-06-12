@@ -69,7 +69,7 @@ this.log.warn("mapped to open");
                 current = Characteristic.CurrentDoorState.CLOSED;
 this.log.warn("mapped to close");
             } else {
-this.log.warn("no match);
+this.log.warn("no match");
                 return;
             }
 
