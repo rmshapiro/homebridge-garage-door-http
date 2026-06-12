@@ -50,23 +50,26 @@ GarageDoorOpener.prototype._http = function (url, cb) {
 
 GarageDoorOpener.prototype._syncSensor = function () {
     this._http(this.config.statusURL, (err, body) => {
-
+this.log.warn("syncsensor called");
         if (err) {
            this.log.warn("Sensor HTTP error:", err.message);
            return;
         }
-
+this.log.warn("raw body:", body);
         try {
             const json = JSON.parse(body);
             const raw = jp.query(json, this.statusKey).pop();
-
+this.log.warn("jsocpath value:", raw);
             let current;
 
             if (new RegExp(this.statusValueOpen).test(raw)) {
                 current = Characteristic.CurrentDoorState.OPEN;
+this.log.warn("mapped to open");
             } else if (new RegExp(this.statusValueClosed).test(raw)) {
                 current = Characteristic.CurrentDoorState.CLOSED;
+this.log.warn("mapped to close");
             } else {
+this.log.warn("no match);
                 return;
             }
 
