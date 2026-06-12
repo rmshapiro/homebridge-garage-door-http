@@ -56,23 +56,32 @@ GarageDoorOpener.prototype._syncSensor = function () {
             const json = JSON.parse(body);
             const raw = jp.query(json, this.statusKey).pop();
 
-            let state;
+            let current;
 
             if (new RegExp(this.statusValueOpen).test(raw)) {
-                state = Characteristic.CurrentDoorState.OPEN;
+                current = Characteristic.CurrentDoorState.OPEN;
             } else if (new RegExp(this.statusValueClosed).test(raw)) {
-                state = Characteristic.CurrentDoorState.CLOSED;
+                current = Characteristic.CurrentDoorState.CLOSED;
             } else {
                 return;
             }
 
+            // 1. ALWAYS set current state
             this.service.updateCharacteristic(
                 Characteristic.CurrentDoorState,
-                state
+                current
+            );
+
+            // 2. CRITICAL: ALWAYS force target sync too
+            this.service.updateCharacteristic(
+                Characteristic.TargetDoorState,
+                current === Characteristic.CurrentDoorState.OPEN
+                    ? Characteristic.TargetDoorState.OPEN
+                    : Characteristic.TargetDoorState.CLOSED
             );
 
         } catch (e) {
-            this.log.warn("Sensor parse error", e);
+            this.log.warn("Sensor error", e);
         }
     });
 };
