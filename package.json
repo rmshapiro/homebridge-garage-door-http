@@ -12,7 +12,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/rmshapiro/homebridge-garage-door-http.git"
+        "url": "git+https://github.com/rmshapiro/homebridge-garage-door-http"
     },
     "dependencies": {
         "jsonpath": "^1.0.2",
@@ -29,7 +29,7 @@
         "shelly",
         "shelly1"
     ],
-    "author": "Ron Shapiro",
+    "author": "Ron Shapiro <rmshapiro@gmail.com>",
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/rmshapiro/homebridge-garage-door-http.git/issues"
