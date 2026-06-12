@@ -50,7 +50,11 @@ GarageDoorOpener.prototype._http = function (url, cb) {
 
 GarageDoorOpener.prototype._syncSensor = function () {
     this._http(this.config.statusURL, (err, body) => {
-        if (err) return;
+
+        if (err) {
+           this.log.warn("Sensor HTTP error:", err.message);
+           return;
+        }
 
         try {
             const json = JSON.parse(body);
@@ -120,11 +124,15 @@ GarageDoorOpener.prototype.getServices = function () {
         .getCharacteristic(Characteristic.TargetDoorState)
         .on("set", this.setTargetDoorState.bind(this));
 
-    // initial sync
+    // 🔥 initial safe sync AFTER service exists
     this._syncSensor();
 
-    // optional light polling (you still need *some* refresh mechanism)
-    setInterval(() => this._syncSensor(), 5000);
+    // 🔥 store interval so it doesn't disappear
+    this.pollTimer = setInterval(() => {
+        this._syncSensor();
+    }, 5000);
+
+    this.log.warn("GarageDoor polling started");
 
     return [this.informationService, this.service];
 };
