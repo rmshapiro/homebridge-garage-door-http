@@ -1,7 +1,10 @@
-var Service, Characteristic;
+let Service, Characteristic;
 
 const packageJson = require("./package.json");
 const jp = require("jsonpath");
+
+// Safe fetch for Homebridge environments
+const fetch = global.fetch || require("node-fetch");
 
 module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
@@ -12,13 +15,6 @@ module.exports = function (homebridge) {
         "GarageDoorHTTP",
         GarageDoorHTTP
     );
-};
-
-const STATES = {
-    OPEN: 0,
-    CLOSED: 1,
-    OPENING: 2,
-    CLOSING: 3
 };
 
 function GarageDoorHTTP(log, config) {
@@ -33,23 +29,6 @@ function GarageDoorHTTP(log, config) {
     this.openTime = config.openTime || 10;
     this.closeTime = config.closeTime || 10;
 
-    this.switchOff = config.switchOff || false;
-    this.switchOffDelay = config.switchOffDelay || 2;
-
-    this.autoLock = config.autoLock || false;
-    this.autoLockDelay = config.autoLockDelay || 20;
-
-    this.manufacturer = config.manufacturer || packageJson.author.name;
-    this.serial = config.serial || packageJson.version;
-    this.model = config.model || packageJson.name;
-    this.firmware = config.firmware || packageJson.version;
-
-    this.username = config.username || null;
-    this.password = config.password || null;
-    this.timeout = config.timeout || 3000;
-
-    this.http_method = config.http_method || "GET";
-
     this.polling = config.polling || false;
     this.pollInterval = config.pollInterval || 120;
     this.movementPollInterval = config.movementPollInterval || 2;
@@ -60,40 +39,28 @@ function GarageDoorHTTP(log, config) {
     this.statusValueOpen = config.statusValueOpen || "0";
     this.statusValueClosed = config.statusValueClosed || "1";
 
-    this.auth = null;
-    if (this.username && this.password) {
-        this.auth = {
-            user: this.username,
-            pass: this.password,
-        };
-    }
+    this.http_method = config.http_method || "GET";
 
-    // STATE MACHINE
+    this.timeout = config.timeout || 3000;
+
     this.state = "UNKNOWN";
     this.movementToken = 0;
+
     this.pollTimer = null;
     this.timeoutTimer = null;
+    this.pollTimerGlobal = null;
 
-    this.service = new Service.GarageDoorHTTP(this.name);
+    this.service = null;
 }
 
 /* -------------------------
    HTTP
 --------------------------*/
-GarageDoorHTTP.prototype._httpRequest = function (url, body, method, callback) {
+GarageDoorHTTP.prototype._httpRequest = function (url, body, callback) {
     fetch(url, {
         method: this.http_method,
         body: body || undefined,
-        signal: AbortSignal.timeout(this.timeout),
-        headers: this.auth
-            ? {
-                  Authorization:
-                      "Basic " +
-                      Buffer.from(
-                          this.auth.user + ":" + this.auth.pass
-                      ).toString("base64")
-              }
-            : {}
+        signal: AbortSignal.timeout(this.timeout)
     })
         .then(async (res) => {
             const text = await res.text();
@@ -106,7 +73,7 @@ GarageDoorHTTP.prototype._httpRequest = function (url, body, method, callback) {
    SENSOR STATUS
 --------------------------*/
 GarageDoorHTTP.prototype._fetchStatus = function (callback) {
-    this._httpRequest(this.statusURL, "", "GET", (error, response, body) => {
+    this._httpRequest(this.statusURL, "", (error, response, body) => {
         if (error) return callback(error);
 
         try {
@@ -115,7 +82,6 @@ GarageDoorHTTP.prototype._fetchStatus = function (callback) {
             const raw = jp.query(json, this.statusKey).pop();
 
             let value = -1;
-
             if (new RegExp(this.statusValueOpen).test(raw)) value = 0;
             else if (new RegExp(this.statusValueClosed).test(raw)) value = 1;
 
@@ -127,25 +93,25 @@ GarageDoorHTTP.prototype._fetchStatus = function (callback) {
 };
 
 /* -------------------------
-   STATE MACHINE CORE
+   STATE SETTER
 --------------------------*/
 GarageDoorHTTP.prototype._setState = function (state, source = "internal") {
     this.state = state;
 
-    let hk;
+    let hkState;
 
     switch (state) {
         case "OPEN":
-            hk = Characteristic.CurrentDoorState.OPEN;
+            hkState = Characteristic.CurrentDoorState.OPEN;
             break;
         case "CLOSED":
-            hk = Characteristic.CurrentDoorState.CLOSED;
+            hkState = Characteristic.CurrentDoorState.CLOSED;
             break;
         case "OPENING":
-            hk = Characteristic.CurrentDoorState.OPENING;
+            hkState = Characteristic.CurrentDoorState.OPENING;
             break;
         case "CLOSING":
-            hk = Characteristic.CurrentDoorState.CLOSING;
+            hkState = Characteristic.CurrentDoorState.CLOSING;
             break;
         default:
             return;
@@ -153,26 +119,18 @@ GarageDoorHTTP.prototype._setState = function (state, source = "internal") {
 
     this.service.updateCharacteristic(
         Characteristic.CurrentDoorState,
-        hk
+        hkState
     );
 
-    // sync Target when sensor confirms final state
+    // sync target on confirmed sensor state
     if (source === "sensor" || source === "sensor-final") {
-        if (state === "OPEN") {
-            this.service.updateCharacteristic(
-                Characteristic.TargetDoorState,
-                Characteristic.TargetDoorState.OPEN
-            );
-        }
+        this.service.updateCharacteristic(
+            Characteristic.TargetDoorState,
+            state === "OPEN"
+                ? Characteristic.TargetDoorState.OPEN
+                : Characteristic.TargetDoorState.CLOSED
+        );
 
-        if (state === "CLOSED") {
-            this.service.updateCharacteristic(
-                Characteristic.TargetDoorState,
-                Characteristic.TargetDoorState.CLOSED
-            );
-        }
-
-        // also clear movement state
         this.movementToken++;
     }
 
@@ -182,7 +140,7 @@ GarageDoorHTTP.prototype._setState = function (state, source = "internal") {
 };
 
 /* -------------------------
-   SENSOR SYNC (IDLE ONLY)
+   SENSOR SYNC
 --------------------------*/
 GarageDoorHTTP.prototype._syncFromSensor = function () {
     if (this.state === "OPENING" || this.state === "CLOSING") return;
@@ -196,17 +154,16 @@ GarageDoorHTTP.prototype._syncFromSensor = function () {
 };
 
 /* -------------------------
-   COMMAND HANDLER
+   COMMAND
 --------------------------*/
 GarageDoorHTTP.prototype.setTargetDoorState = function (value, callback) {
     const desired = value === 0 ? "OPEN" : "CLOSED";
 
-    // nothing to do if door is already at correct state
     if (
         (desired === "OPEN" && this.state === "OPEN") ||
         (desired === "CLOSED" && this.state === "CLOSED")
     ) {
-	this.log.debug("%s requested but current state is %s",desired, this.state);
+        this.log.debug("%s requested but already in state %s", desired, this.state);
         return callback();
     }
 
@@ -220,7 +177,7 @@ GarageDoorHTTP.prototype.setTargetDoorState = function (value, callback) {
 
     const url = value === 1 ? this.closeURL : this.openURL;
 
-    this._httpRequest(url, "", this.http_method, (error) => {
+    this._httpRequest(url, "", (error) => {
         if (error) {
             this.log.warn("Command error: %s", error.message);
             return callback(error);
@@ -231,9 +188,7 @@ GarageDoorHTTP.prototype.setTargetDoorState = function (value, callback) {
             value
         );
 
-        this.log.debug("Setting targetDoorState to %s", desired);
         this._startMovementMonitor(desired, token);
-
         callback();
     });
 };
@@ -258,15 +213,15 @@ GarageDoorHTTP.prototype._startMovementMonitor = function (desired, token) {
                 clearInterval(this.pollTimer);
                 clearTimeout(this.timeoutTimer);
 
-            this._setState(targetState, "sensor-final");
+                this._setState(targetState, "sensor-final");
 
-            this.service.updateCharacteristic(
-               Characteristic.TargetDoorState,
-               targetState === "OPEN"
-                  ? Characteristic.TargetDoorState.OPEN
-                  : Characteristic.TargetDoorState.CLOSED
-            );
-         }
+                this.service.updateCharacteristic(
+                    Characteristic.TargetDoorState,
+                    targetState === "OPEN"
+                        ? Characteristic.TargetDoorState.OPEN
+                        : Characteristic.TargetDoorState.CLOSED
+                );
+            }
         });
     }, this.movementPollInterval * 1000);
 
@@ -296,31 +251,27 @@ GarageDoorHTTP.prototype.getServices = function () {
     this.informationService = new Service.AccessoryInformation();
 
     this.informationService
-        .setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
-        .setCharacteristic(Characteristic.Model, this.model)
-        .setCharacteristic(Characteristic.SerialNumber, this.serial)
-        .setCharacteristic(Characteristic.FirmwareRevision, this.firmware);
+        .setCharacteristic(Characteristic.Manufacturer, this.config.manufacturer || "Garage HTTP")
+        .setCharacteristic(Characteristic.Model, packageJson.name)
+        .setCharacteristic(Characteristic.SerialNumber, packageJson.version);
+
+    this.service = new Service.GarageDoorOpener(this.name);
 
     this.service
         .getCharacteristic(Characteristic.TargetDoorState)
         .on("set", this.setTargetDoorState.bind(this));
 
+    // initialize safe state
+    this.service
+        .getCharacteristic(Characteristic.CurrentDoorState)
+        .updateValue(Characteristic.CurrentDoorState.CLOSED);
+
     if (this.polling) {
         this._syncFromSensor();
 
-        setInterval(() => {
+        this.pollTimerGlobal = setInterval(() => {
             this._syncFromSensor();
         }, this.pollInterval * 1000);
-    } else {
-        this.service.updateCharacteristic(
-            Characteristic.CurrentDoorState,
-            STATES.CLOSED
-        );
-
-        this.service.updateCharacteristic(
-            Characteristic.TargetDoorState,
-            STATES.CLOSED
-        );
     }
 
     return [this.informationService, this.service];
