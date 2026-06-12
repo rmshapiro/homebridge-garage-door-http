@@ -1,7 +1,6 @@
 var Service, Characteristic;
 
 const packageJson = require("./package.json");
-const request = require("request");
 const jp = require("jsonpath");
 
 module.exports = function (homebridge) {
@@ -82,17 +81,25 @@ function GarageDoorHTTP(log, config) {
    HTTP
 --------------------------*/
 GarageDoorHTTP.prototype._httpRequest = function (url, body, method, callback) {
-    request(
-        {
-            url,
-            body,
-            method: this.http_method,
-            timeout: this.timeout,
-            rejectUnauthorized: false,
-            auth: this.auth,
-        },
-        (error, response, body) => callback(error, response, body)
-    );
+    fetch(url, {
+        method: this.http_method,
+        body: body || undefined,
+        signal: AbortSignal.timeout(this.timeout),
+        headers: this.auth
+            ? {
+                  Authorization:
+                      "Basic " +
+                      Buffer.from(
+                          this.auth.user + ":" + this.auth.pass
+                      ).toString("base64")
+              }
+            : {}
+    })
+        .then(async (res) => {
+            const text = await res.text();
+            callback(null, res, text);
+        })
+        .catch((err) => callback(err));
 };
 
 /* -------------------------
