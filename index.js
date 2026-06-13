@@ -94,6 +94,41 @@ GarageDoorOpener.prototype._syncSensor = function () {
 // ---------------- COMMAND ONLY ----------------
 
 GarageDoorOpener.prototype.setTargetDoorState = function (value, callback) {
+
+    // Check current door state - don't update if state is the same as the target
+    const current = this.service.getCharacteristic(
+        Characteristic.CurrentDoorState
+    ).value;
+
+    if (
+        value === Characteristic.TargetDoorState.OPEN &&
+        current === Characteristic.CurrentDoorState.OPEN
+    ) {
+        this.log.debug("Already open, ignoring command");
+        return callback();
+    }
+
+    if (
+        value === Characteristic.TargetDoorState.CLOSED &&
+        current === Characteristic.CurrentDoorState.CLOSED
+    ) {
+        this.log.debug("Already closed, ignoring command");
+        return callback();
+    }
+
+    // Set state to OPENING or CLOSING until next sensor update
+    if (value === Characteristic.TargetDoorState.OPEN) {
+        this.service.updateCharacteristic(
+            Characteristic.CurrentDoorState,
+            Characteristic.CurrentDoorState.OPENING
+        );
+    } else {
+        this.service.updateCharacteristic(
+            Characteristic.CurrentDoorState,
+            Characteristic.CurrentDoorState.CLOSING
+        );
+    }
+
     const url = value === 0 ? this.openURL : this.closeURL;
 
     this._http(url, (err) => {
