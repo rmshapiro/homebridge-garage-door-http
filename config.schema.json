@@ -35,42 +35,57 @@
                 "title": "Open URL",
                 "type": "string",
                 "required": true,
+		"default": "http://192.168.1.100:8080/garage/open",
                 "description": "URL to trigger the opening of your garage"
             },
             "closeURL": {
                 "title": "Close URL",
                 "type": "string",
                 "required": true,
+		"default": "http://192.168.1.100:8080/garage/close",
                 "description": "URL to trigger the closing of your garage"
             },
-
-            "pollInterval": {
-                "title": "Polling interval",
+            "transitionTime": {
+                "title": "Transition Time (s)",
                 "type": "integer",
-                "default": 120,
-                "description": "Time (in seconds) between device polls (if `polling` is enabled) "
+                "default": 15,
+		"required": true,
+                "description": "Time (in seconds) for open/close) "
+            },
+             "pollInterval": {
+                "title": "Polling interval (s)",
+                "type": "integer",
+                "default": 15,
+		"enum": [2, 5, 10, 15, 30, 60],
+		"required": true,
+                "description": "Time (in seconds) between device polls"
             },
             "statusURL": {
                 "title": "Status polling URL",
                 "type": "string",
+		"required": true,
+		"default": "http://192.168.1.100:8080/garage/status?json=1",
                 "description": "URL to retrieve state on poll (if `statusField*` options are not set, expects HTTP response body to be `0` or `1`)"
             },
             "statusKey": {
                 "title": "Status Key",
                 "type": "string",
-                "default": "$.inputs[0].input",
+                "default": "state",
+		"required"": true,
                 "description": "JSONPath that identifies the property that contains the status of the door (e.g. `$.inputs[0].input` is the default for Shelly 1) | `$.inputs[0].input`"
             },
             "statusValueOpen": {
                 "title": "Open status value",
                 "type": "string",
-                "default": "0",
+                "default": "OPEN",
+		"required": true,
                 "description": "Regex that will match the `open` state of the relay status (e.g. `open`)"
             },
             "statusValueClosed": {
                 "title": "Closed status value",
                 "type": "string",
-                "default": "1",
+                "default": "CLOSED",
+		"required": true,
                 "description": "Regex that will match the `closed` state of the relay status (e.g. `closed`)"
             },
             "debug": {
