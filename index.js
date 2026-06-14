@@ -49,8 +49,6 @@ function GarageDoorOpener(log, config) {
     this.service = null;
 
     this.state = STATE.IDLE;
-
-    this.log.warn(`[${this.name}] created`);
 }
 
 // ---------- Helper functions
@@ -97,7 +95,7 @@ GarageDoorOpener.prototype._syncSensor = function () {
     this._http(this.statusURL, (err, body) => {
 
         if (err) {
-            this.log.warn("Sensor HTTP error:", err.message);
+            console.log("Sensor HTTP error:", err.message);
             return;
         }
 
@@ -136,7 +134,7 @@ GarageDoorOpener.prototype._syncSensor = function () {
             );
 
         } catch (e) {
-            this.log.warn("Sensor error", e);
+            console.log("Sensor error", e);
         }
     });
 };
@@ -171,12 +169,12 @@ GarageDoorOpener.prototype.setTargetDoorState = function (value, callback) {
             : Characteristic.CurrentDoorState.CLOSING
     );
 
-    this.log.warn(`[${this.name}] ${this.state}`);
+    console.log(`${this.state}`);
 
     this._http(url, (err) => {
 
         if (err) {
-            this.log.warn("Command failed:", err.message);
+            console.log("Command failed:", err.message);
             this.state = STATE.IDLE;
             return callback(err);
         }
@@ -209,7 +207,7 @@ GarageDoorOpener.prototype.getServices = function () {
     this._syncSensor();
     this.pollLoop();
 
-    this.log.warn(`[${this.name}] polling started`);
+    console.log(`polling started`);
 
     return [this.informationService, this.service];
 };
