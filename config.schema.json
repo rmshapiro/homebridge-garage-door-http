@@ -1,100 +1,103 @@
 {
-    "pluginAlias": "GarageDoorOpener",
-    "pluginType": "accessory",
-    "singular": false,
-    "schema": {
-        "type": "object",
-        "properties": {
-            "name": {
-                "title": "Name",
-                "type": "string",
-                "required": true,
-                "description": "Name to appear in the Home app"
+  "pluginAlias": "GarageDoorOpener",
+  "pluginType": "accessory",
+  "singular": false,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "description": "Name to appear in the Home app"
+      },
 
-            },
-            "http_method": {
-                "title": "HTTP Method",
-                "type": "string",
-                "oneOf": [{
-                    "title": "GET",
-                    "enum": [
-                        "GET"
-                    ]
-                }, {
-                    "title": "POST",
-                    "enum": [
-                        "POST"
-                    ]
-                }],
-                "required": true,
-                "default": "GET",
-                "description": "The HTTP method to be used to communicate with the device API."
+      "http_method": {
+        "title": "HTTP Method",
+        "type": "string",
+        "oneOf": [
+          { "title": "GET", "enum": ["GET"] },
+          { "title": "POST", "enum": ["POST"] }
+        ],
+        "default": "GET",
+        "description": "The HTTP method to be used to communicate with the device API."
+      },
 
-            },
-            "openURL": {
-                "title": "Open URL",
-                "type": "string",
-                "required": true,
-		"default": "http://192.168.1.100:8080/garage/open",
-                "description": "URL to trigger the opening of your garage"
-            },
-            "closeURL": {
-                "title": "Close URL",
-                "type": "string",
-                "required": true,
-		"default": "http://192.168.1.100:8080/garage/close",
-                "description": "URL to trigger the closing of your garage"
-            },
-            "transitionTime": {
-                "title": "Transition Time (s)",
-                "type": "integer",
-                "default": 15,
-		"required": true,
-                "description": "Time (in seconds) for open/close) "
-            },
-             "pollInterval": {
-                "title": "Polling interval (s)",
-                "type": "integer",
-                "default": 15,
-		"enum": [2, 5, 10, 15, 30, 60],
-		"required": true,
-                "description": "Time (in seconds) between device polls"
-            },
-            "statusURL": {
-                "title": "Status polling URL",
-                "type": "string",
-		"required": true,
-		"default": "http://192.168.1.100:8080/garage/status?json=1",
-                "description": "URL to retrieve state on poll (if `statusField*` options are not set, expects HTTP response body to be `0` or `1`)"
-            },
-            "statusKey": {
-                "title": "Status Key",
-                "type": "string",
-                "default": "state",
-		"required"": true,
-                "description": "JSONPath that identifies the property that contains the status of the door (e.g. `$.inputs[0].input` is the default for Shelly 1) | `$.inputs[0].input`"
-            },
-            "statusValueOpen": {
-                "title": "Open status value",
-                "type": "string",
-                "default": "OPEN",
-		"required": true,
-                "description": "Regex that will match the `open` state of the relay status (e.g. `open`)"
-            },
-            "statusValueClosed": {
-                "title": "Closed status value",
-                "type": "string",
-                "default": "CLOSED",
-		"required": true,
-                "description": "Regex that will match the `closed` state of the relay status (e.g. `closed`)"
-            },
-            "debug": {
-                "title": "Debug mode",
-                "type": "boolean",
-                "default": false,
-                "description": "Turn on debug mode, i.e. additional information will show up on the homebridge log."
-            }
+      "openURL": {
+        "title": "Open URL",
+        "type": "string",
+        "default": "http://192.168.1.100:8080/garage/open",
+        "description": "URL to trigger the opening of your garage"
+      },
 
-        }
-    }
+      "closeURL": {
+        "title": "Close URL",
+        "type": "string",
+        "default": "http://192.168.1.100:8080/garage/close",
+        "description": "URL to trigger the closing of your garage"
+      },
+
+      "transitionTime": {
+        "title": "Transition Time (s)",
+        "type": "integer",
+        "default": 15,
+        "description": "Time (in seconds) for open/close"
+      },
+
+      "pollInterval": {
+        "title": "Polling interval (s)",
+        "type": "integer",
+        "default": 15,
+        "enum": [2, 5, 10, 15, 30, 60],
+        "description": "Time (in seconds) between device polls"
+      },
+
+      "statusURL": {
+        "title": "Status polling URL",
+        "type": "string",
+        "default": "http://192.168.1.100:8080/garage/status?json=1",
+        "description": "URL to retrieve state on poll"
+      },
+
+      "statusKey": {
+        "title": "Status Key",
+        "type": "string",
+        "default": "state",
+        "description": "JSONPath for status value"
+      },
+
+      "statusValueOpen": {
+        "title": "Open status value",
+        "type": "string",
+        "default": "OPEN",
+        "description": "Value representing open state"
+      },
+
+      "statusValueClosed": {
+        "title": "Closed status value",
+        "type": "string",
+        "default": "CLOSED",
+        "description": "Value representing closed state"
+      },
+
+      "debug": {
+        "title": "Debug mode",
+        "type": "boolean",
+        "default": false,
+        "description": "Enable debug logging"
+      }
+    },
+
+    "required": [
+      "name",
+      "http_method",
+      "openURL",
+      "closeURL",
+      "transitionTime",
+      "pollInterval",
+      "statusURL",
+      "statusKey",
+      "statusValueOpen",
+      "statusValueClosed"
+    ]
+  }
 }
